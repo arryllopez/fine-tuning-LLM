@@ -34,7 +34,16 @@ tokenizer.pad_token = tokenizer.eos_token  # Set pad token to eos token, eos_tok
 #the eos token is unique to the models tokenizer, so we can use it as the pad token
 tokenizer.padding_side = "right"  # Set padding side to right
 #example of right padding
-# hello how are you pad (pad is added to the right to ensure all sequences are of the same length)
+# hello how are you pad (pad is added to the right as indicated by 'tokenizer.padding_side = 'right'' to ensure 
+# all sequences are of the same length)
 # whats up my old friend
 tokenizer.pad_token_id = tokenizer.eos_token_id  # Set pad token id to eos token id
 
+generation_configuration = model.generation_config
+generation_configuration.pad_token_id = tokenizer.eos_token_id
+generation_configuration.eos_token_id = tokenizer.eos_token_id  # Set eos token id to eos token id
+generation_configuration.max_new_tokens = 1024
+
+generation_configuration.temperature = 0.7  # Set temperature to 0.7, which controls the randomness of the model's output
+generation_configuration.top_p = 0.90  # Set top_p to 0.90, which controls the diversity of the model's output
+generation_configuration.top_k = 20  # Set top_k to 50, which controls the diversity of the model's output
