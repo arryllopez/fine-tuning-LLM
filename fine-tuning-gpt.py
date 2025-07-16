@@ -4,6 +4,9 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 #automodel is a parent class for a basic model that can be used for specific LMS, causal LMs are chatbot models like GPT-2
 #autotokenizer is used to convert text into tokens that the model can understand
 from datasets import load_dataset
+from trl import SFTTrainer  # SFTTrainer is a class for training models using supervised fine-tuning
+from trl.trainer import ConstantLengthDataset  # ConstantLengthDataset is a class for creating datasets with constant length sequences  
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")   
 
@@ -42,8 +45,27 @@ tokenizer.pad_token_id = tokenizer.eos_token_id  # Set pad token id to eos token
 generation_configuration = model.generation_config
 generation_configuration.pad_token_id = tokenizer.eos_token_id
 generation_configuration.eos_token_id = tokenizer.eos_token_id  # Set eos token id to eos token id
-generation_configuration.max_new_tokens = 1024
-
+generation_configuration.max_new_tokens = 1024 #this is the maximum number of new tokens that GPT-2 can generate
+# this is set to 1024, which is the maximum number of tokens that GPT-2 can generate in a single pass
 generation_configuration.temperature = 0.7  # Set temperature to 0.7, which controls the randomness of the model's output
 generation_configuration.top_p = 0.90  # Set top_p to 0.90, which controls the diversity of the model's output
 generation_configuration.top_k = 20  # Set top_k to 50, which controls the diversity of the model's output
+
+#TRAINING AND TESTING THE MODEL
+
+#funciton to generate the answer based on a prompt
+#this function takes a prompt as input, encodes it, generates a response using the model
+
+def generate(prompt): 
+    encoded = tokenizer.encode(prompt,add_special_tokens=True, return_tensors="pt").to(device)  # Encode the prompt and convert it to a tensor
+    out = model.generate(input_ids=encoded, repetition_penalty = 2.0, do_sample=True) 
+    string_decoded = tokenizer.decode(out[0].tolist(), clean_up_tokenization_spaces=True)  # Decode the output tensor to a string
+    print(string_decoded)  # Print the generated string
+
+generate('this is')
+
+print("---------------------------") 
+
+generate('how are you') 
+
+#training loop
