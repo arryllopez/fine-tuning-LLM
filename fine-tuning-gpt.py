@@ -4,7 +4,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 #automodel is a parent class for a basic model that can be used for specific LMS, causal LMs are chatbot models like GPT-2
 #autotokenizer is used to convert text into tokens that the model can understand
 from datasets import load_dataset
-from trl import SFTTrainer  # SFTTrainer is a class for training models using supervised fine-tuning
+from trl import SFTTrainer, SFTConfig  # SFTTrainer is a class for training models using supervised fine-tuning
 from trl.trainer import ConstantLengthDataset  # ConstantLengthDataset is a class for creating datasets with constant length sequences  
 
 
@@ -68,4 +68,28 @@ print("---------------------------")
 
 generate('how are you') 
 
-#training loop
+#training loop using SFTTrainer instead of vanilla PyTorch training loop
+#SFTTrainer is a class that simplifies the process of training models using supervised fine-tuning, making it easier to implement and manage training workflows.
+
+training_args = SFTConfig(
+    gradient_accumulation_steps=1, #
+    num_train_epochs=1, #epochs is the number of passes the model makes over the entire training dataset
+    learning_rate = 2e-4,
+    fp16=True,
+    output_dir="logs",
+    #learning rate is critical to gradient descent, since a dynamic learning rate is best, the learning rate is scheduled like a cosine function, 
+    lr_scheduler_type="cosine",
+    warmup_ratio=0.05, #warmup ratio is the fraction of training steps to perform learning rate warmup
+    group_by_length=True,  #during training, the model will group sequences of same lengths together to optimize training efficiency
+    max_length=512
+) 
+
+
+#defining our trainer by passing the model, training dataset, tokenizer, and the above training arguments
+trainer = SFTTrainer(model=model, train_dataset=training_dataset, processing_class = tokenizer, args = training_args) 
+
+trainer.train() 
+
+print("Training complete!")
+print("---------------------------")
+generate('how are you')  # Generate a response after training to see if the model has learned anything
